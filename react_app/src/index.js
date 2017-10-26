@@ -71,7 +71,14 @@ class App extends StoreComponent {
   constructor() {
     super();
 
-    this.socket = new WebSocket(`ws://${window.location.hostname}:8080`);
+    let protocol;
+    if (window.location.origin[4] == 's') {
+      protocol = 'wss';
+    } else {
+      protocol = 'ws';
+    }
+
+    this.socket = new WebSocket(`${protocol}://${window.location.hostname}:8080`);
     this.socket.addEventListener('open', (event) => {
     });
     this.socket.addEventListener('message', (event) => {
