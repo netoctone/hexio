@@ -71,6 +71,14 @@ class App extends StoreComponent {
   constructor() {
     super();
 
+    this.connect();
+    setInterval(() => this.trySend(JSON.stringify(['ping'])), 30*1000);
+
+    this.moves = [];
+    this.lastMoveStep = 0;
+  }
+
+  connect() {
     let url;
     if (window.location.origin[4] == 's') {
       url = `wss://${window.location.hostname}`;
@@ -104,14 +112,20 @@ class App extends StoreComponent {
     this.socket.addEventListener('error', (event) => {
       switch(event.code) {
         case 'ECONNREFUSED': {
-          this.socket.reconnect(event);
           break;
         }
       }
     });
+  }
 
-    this.moves = [];
-    this.lastMoveStep = 0;
+  trySend(data) {
+    if (this.socket.readyState == 1) {
+      this.socket.send(data);
+    } else {
+      alert('connection lost');
+      this.connect();
+      store.dispatch({ type: 'game', game: null });
+    }
   }
 
   handleKey(e) {
@@ -152,7 +166,7 @@ class App extends StoreComponent {
       }
 
       const move = this.moves.shift();
-      this.socket.send(JSON.stringify(['move', this.state.store.game.number, move]));
+      this.trySend(JSON.stringify(['move', this.state.store.game.number, move]));
       this.lastMoveStep = this.state.store.game.step;
     }
   }
@@ -180,16 +194,12 @@ class App extends StoreComponent {
   }
 
   handleStart(nickname) {
-    if (this.socket.readyState == 1) {
-      this.socket.send(JSON.stringify(['start', nickname]));
-    }
+    this.trySend(JSON.stringify(['start', nickname]));
   }
 
   handleCancel() {
-    if (this.socket.readyState == 1) {
-      this.socket.send(JSON.stringify(['stop', this.state.store.game.number]));
-      store.dispatch({ type: 'game', game: null });
-    }
+    this.trySend(JSON.stringify(['stop', this.state.store.game.number]));
+    store.dispatch({ type: 'game', game: null });
   }
 
   handleRestart() {
@@ -202,16 +212,12 @@ class App extends StoreComponent {
   }
 
   handleForce() {
-    if (this.socket.readyState == 1) {
-      this.socket.send(JSON.stringify(['toggle_force', this.state.store.game.number]));
-    }
+    this.trySend(JSON.stringify(['toggle_force', this.state.store.game.number]));
   }
 
   handleSurrender() {
-    if (this.socket.readyState == 1) {
-      this.socket.send(JSON.stringify(['stop', this.state.store.game.number]));
-      this.setState({ surrenderDialog: false });
-    }
+    this.trySend(JSON.stringify(['stop', this.state.store.game.number]));
+    this.setState({ surrenderDialog: false });
   }
 
   shouldComponentSetState(newState) {
