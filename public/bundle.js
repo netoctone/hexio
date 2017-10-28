@@ -10141,46 +10141,10 @@ var App = function (_StoreComponent) {
 
     var _this3 = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this));
 
-    var url = void 0;
-    if (window.location.origin[4] == 's') {
-      url = 'wss://' + window.location.hostname;
-    } else {
-      url = 'ws://' + window.location.hostname + ':8080';
-    }
-
-    _this3.socket = new WebSocket(url);
-    _this3.socket.addEventListener('open', function (event) {});
-    _this3.socket.addEventListener('message', function (event) {
-      var data = JSON.parse(event.data);
-      if (data.length) {
-        switch (data[0]) {
-          case 'game':
-            {
-              store.dispatch({ type: 'game', game: data[1] });
-              if (data[1].size) {
-                _this3.lastMoveStep = 0;
-              }
-              _this3.dispatchMoves();
-              _this3.makeMove();
-              break;
-            }
-          case 'error':
-            {
-              alert(data[1]);
-              break;
-            }
-        }
-      }
-    });
-    _this3.socket.addEventListener('error', function (event) {
-      switch (event.code) {
-        case 'ECONNREFUSED':
-          {
-            _this3.socket.reconnect(event);
-            break;
-          }
-      }
-    });
+    _this3.connect();
+    setInterval(function () {
+      return _this3.trySend(JSON.stringify(['ping']));
+    }, 30 * 1000);
 
     _this3.moves = [];
     _this3.lastMoveStep = 0;
@@ -10188,6 +10152,62 @@ var App = function (_StoreComponent) {
   }
 
   _createClass(App, [{
+    key: 'connect',
+    value: function connect() {
+      var _this4 = this;
+
+      var url = void 0;
+      if (window.location.origin[4] == 's') {
+        url = 'wss://' + window.location.hostname;
+      } else {
+        url = 'ws://' + window.location.hostname + ':8080';
+      }
+
+      this.socket = new WebSocket(url);
+      this.socket.addEventListener('open', function (event) {});
+      this.socket.addEventListener('message', function (event) {
+        var data = JSON.parse(event.data);
+        if (data.length) {
+          switch (data[0]) {
+            case 'game':
+              {
+                store.dispatch({ type: 'game', game: data[1] });
+                if (data[1].size) {
+                  _this4.lastMoveStep = 0;
+                }
+                _this4.dispatchMoves();
+                _this4.makeMove();
+                break;
+              }
+            case 'error':
+              {
+                alert(data[1]);
+                break;
+              }
+          }
+        }
+      });
+      this.socket.addEventListener('error', function (event) {
+        switch (event.code) {
+          case 'ECONNREFUSED':
+            {
+              break;
+            }
+        }
+      });
+    }
+  }, {
+    key: 'trySend',
+    value: function trySend(data) {
+      if (this.socket.readyState == 1) {
+        this.socket.send(data);
+      } else {
+        alert('connection lost');
+        this.connect();
+        store.dispatch({ type: 'game', game: null });
+      }
+    }
+  }, {
     key: 'handleKey',
     value: function handleKey(e) {
       var coord = this.state.store.coord;
@@ -10228,7 +10248,7 @@ var App = function (_StoreComponent) {
         }
 
         var move = this.moves.shift();
-        this.socket.send(JSON.stringify(['move', this.state.store.game.number, move]));
+        this.trySend(JSON.stringify(['move', this.state.store.game.number, move]));
         this.lastMoveStep = this.state.store.game.step;
       }
     }
@@ -10282,17 +10302,13 @@ var App = function (_StoreComponent) {
   }, {
     key: 'handleStart',
     value: function handleStart(nickname) {
-      if (this.socket.readyState == 1) {
-        this.socket.send(JSON.stringify(['start', nickname]));
-      }
+      this.trySend(JSON.stringify(['start', nickname]));
     }
   }, {
     key: 'handleCancel',
     value: function handleCancel() {
-      if (this.socket.readyState == 1) {
-        this.socket.send(JSON.stringify(['stop', this.state.store.game.number]));
-        store.dispatch({ type: 'game', game: null });
-      }
+      this.trySend(JSON.stringify(['stop', this.state.store.game.number]));
+      store.dispatch({ type: 'game', game: null });
     }
   }, {
     key: 'handleRestart',
@@ -10308,17 +10324,13 @@ var App = function (_StoreComponent) {
   }, {
     key: 'handleForce',
     value: function handleForce() {
-      if (this.socket.readyState == 1) {
-        this.socket.send(JSON.stringify(['toggle_force', this.state.store.game.number]));
-      }
+      this.trySend(JSON.stringify(['toggle_force', this.state.store.game.number]));
     }
   }, {
     key: 'handleSurrender',
     value: function handleSurrender() {
-      if (this.socket.readyState == 1) {
-        this.socket.send(JSON.stringify(['stop', this.state.store.game.number]));
-        this.setState({ surrenderDialog: false });
-      }
+      this.trySend(JSON.stringify(['stop', this.state.store.game.number]));
+      this.setState({ surrenderDialog: false });
     }
   }, {
     key: 'shouldComponentSetState',
@@ -10528,10 +10540,10 @@ var Lobby = function (_StoreComponent4) {
   function Lobby(props) {
     _classCallCheck(this, Lobby);
 
-    var _this7 = _possibleConstructorReturn(this, (Lobby.__proto__ || Object.getPrototypeOf(Lobby)).call(this, props));
+    var _this8 = _possibleConstructorReturn(this, (Lobby.__proto__ || Object.getPrototypeOf(Lobby)).call(this, props));
 
-    _this7.state.force = false;
-    return _this7;
+    _this8.state.force = false;
+    return _this8;
   }
 
   _createClass(Lobby, [{
@@ -10730,7 +10742,7 @@ var Board = function (_StoreComponent5) {
   }, {
     key: 'render',
     value: function render() {
-      var _this9 = this;
+      var _this10 = this;
 
       var size = this.parseSize();
       var maxHeight = size.height + Math.min(size.widthRight, size.widthLeft) - 1;
@@ -10761,7 +10773,7 @@ var Board = function (_StoreComponent5) {
             return _react2.default.createElement(Tile, { left: i, top: offset + 2 * j,
               coord: coord,
               lastVertical: j == height - 1,
-              onSelect: _this9.props.onSelect.bind(_this9, coord) });
+              onSelect: _this10.props.onSelect.bind(_this10, coord) });
           });
         })
       );
