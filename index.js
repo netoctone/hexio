@@ -10,10 +10,14 @@ app.get('/', (req, resp) => {
 });
 
 const server = app.listen(process.env.PORT || 5000, () => {
-  console.log(`Listening on port ${server.address().port}`);
+  console.log(`Listening on port ${server.address().port}, env ${process.env.NODE_ENV}`);
 });
 
-const wss = new WebSocket.Server({ server, port: 8080 });
+const wsConfig = { server };
+if (process.env.NODE_ENV == 'development') {
+  wsConfig.port = 8080;
+}
+const wss = new WebSocket.Server(wsConfig);
 
 function genArray(size) {
   return Array.from(new Array(size));
@@ -598,7 +602,7 @@ function handleMessage(ws, msgRaw, address) {
 }
 
 function wsAddress(ws) {
-  if (process.env.NODE_ENV != 'production') {
+  if (process.env.NODE_ENV == 'development') {
     return ws._socket.remoteAddress + ws.id;
   } else {
     return ws._socket.remoteAddress;
