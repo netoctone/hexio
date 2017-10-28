@@ -2,11 +2,18 @@ const path = require('path');
 const express = require('express');
 const WebSocket = require('ws');
 const app = express();
+const redis = require('./db');
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, resp) => {
   resp.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/stats', (req, resp) => {
+  redis.getGameStats((stats) => {
+    resp.send(JSON.stringify(stats));
+  });
 });
 
 const server = app.listen(process.env.PORT || 5000, () => {
@@ -57,7 +64,7 @@ class Game {
     if (!coord.length) {
       return undefined;
     }
-    return this.map[coord[0]].cells[coord[1]];
+    return this.map[coord[0]] && this.map[coord[0]].cells[coord[1]];
   }
 
   connected() {
@@ -342,7 +349,7 @@ class Game {
       const [from, to, half] = this.curMoves[pl];
       const cellFrom = this.at(from);
       const cellTo = this.at(to);
-      if (cellFrom && cellFrom.player == this.players[pl].index && cellTo.type != OBST) {
+      if (cellFrom && cellTo && cellFrom.player == this.players[pl].index && cellTo.type != OBST) {
         if (cellFrom.number > 1 && this.neighbors(from).some((c2) => c2[0] == to[0] && c2[1] == to[1])) {
           const playerToWas = cellTo.player;
           this.doMove(cellFrom, cellTo, half, this.playersList);
@@ -459,6 +466,7 @@ class Game {
           win: true
         }]);
       }
+      redis.saveGameStats(this.stepNumber, Object.keys(this.players).length);
       this.factory.end(this.number);
     } else {
       setTimeout(this.step.bind(this), STEP_TIMEOUT);
