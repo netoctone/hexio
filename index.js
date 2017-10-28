@@ -602,10 +602,11 @@ function handleMessage(ws, msgRaw, address) {
 }
 
 function wsAddress(ws) {
+  const addr = ws.upgradeReq.headers['x-forwarded-for'] || ws._socket.remoteAddress; 
   if (process.env.NODE_ENV == 'development') {
-    return ws._socket.remoteAddress + ws.id;
+    return addr + ws.id;
   } else {
-    return ws._socket.remoteAddress;
+    return addr;
   }
 }
 
