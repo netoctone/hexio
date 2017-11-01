@@ -23,6 +23,18 @@ module.exports = (env) => {
           }
         }
       ]
-    }
+    },
+    plugins: (() => {
+      if (process.env.NODE_ENV == 'production') {
+        return [
+          new webpack.DefinePlugin({
+            'process.env': { NODE_ENV: JSON.stringify('production') }
+          }),
+          new webpack.optimize.UglifyJsPlugin()
+        ];
+      } else {
+        return [];
+      }
+    })()
   };
 };
