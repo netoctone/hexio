@@ -1,6 +1,12 @@
 {
+  "name": "hexio",
+  "version": "0.0.1",
+  "description": "A web game with multiple players trying to conquer enemy base",
   "engines": {
     "node": "6.11.1"
+  },
+  "scripts": {
+    "start": "node index.js"
   },
   "dependencies": {
     "express": "4.15.2",

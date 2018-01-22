@@ -1,5 +1,5 @@
 {
-  "name": "hex",
+  "name": "hexio-ui",
   "version": "0.0.1",
   "private": true,
   "dependencies": {
@@ -17,9 +17,6 @@
     "webpack": "^2.2.1"
   },
   "scripts": {
-    "start": "webpack --config webpack.config.js --watch",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "start": "webpack --config webpack.config.js --watch"
   }
 }
