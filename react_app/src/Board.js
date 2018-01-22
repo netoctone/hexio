@@ -1,11 +1,13 @@
 import React from 'react';
 import StoreComponent from './StoreComponent';
 import Tile from './Tile';
-import { SIDE, genArray, arraysEqual } from './util';
+import { SIDE, genArray, arraysEqual, startTone } from './util';
 
 export default class Board extends StoreComponent {
   constructor(props) {
     super(props);
+
+    startTone.play();
   }
 
   shouldComponentSetState(newState) {

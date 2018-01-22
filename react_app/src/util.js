@@ -1,5 +1,6 @@
 export const COLORS = ['red', 'blue', 'green', 'purple', 'cyan', 'gold', 'tomato', 'fuchsia'];
 export const SIDE = 20;
+export const startTone = new Audio('public/start_tone.mp3');
 
 export function sizeWidthLeft(store) {
   return store.game.size[1];
